@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selenium Java to Playwright Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        select, button {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        select:hover, select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .editor-box {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .editor-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .editor-header h3 {
+            color: #333;
+            font-size: 1rem;
+        }
+        
+        .language-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        textarea, pre {
+            width: 100%;
+            height: 500px;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            border: none;
+            resize: none;
+            outline: none;
+        }
+        
+        textarea {
+            background: #fafafa;
+        }
+        
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .status-bar {
+            background: #f8f9fa;
+            padding: 10px 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .loading.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error {
+            color: #e74c3c;
+            background: #fdf2f2;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .error.active {
+            display: block;
+        }
+        
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 900px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>Selenium Java to Playwright Converter</h1>
+            <p>Convert your Selenium Java test scripts to Playwright JavaScript/TypeScript</p>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="language">Target Language:</label>
+                <select id="language">
+                    <option value="typescript">TypeScript (.spec.ts)</option>
+                    <option value="javascript">JavaScript (.spec.js)</option>
+                </select>
+            </div>
+            
+            <button id="convertBtn" onclick="convertCode()">Convert Code</button>
+            <button id="downloadBtn" onclick="downloadCode()" disabled>Download File</button>
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="editor-container">
+            <div class="editor-box">
+                <div class="editor-header">
+                    <h3>Source (Selenium Java)</h3>
+                    <span class="language-badge">JAVA</span>
+                </div>
+                <textarea id="javaInput" placeholder="Paste your Selenium Java code here...
+
+Example:
+import org.openqa.selenium.By;
+import org.testng.annotations.Test;
+
+public class LoginTest {
+    @Test
+    public void testLogin() {
+        driver.findElement(By.id(&quot;username&quot;)).sendKeys(&quot;admin&quot;);
+        driver.findElement(By.id(&quot;password&quot;)).sendKeys(&quot;secret&quot;);
+        driver.findElement(By.id(&quot;login&quot;)).click();
+    }
+}"></textarea>
+                <div class="status-bar">
+                    <span id="inputStats">0 lines</span>
+                </div>
+            </div>
+            
+            <div class="editor-box">
+                <div class="editor-header">
+                    <h3>Result (Playwright)</h3>
+                    <span class="language-badge" id="outputBadge">TS</span>
+                </div>
+                <pre id="playwrightOutput"><code>// Converted Playwright code will appear here...</code></pre>
+                <div class="status-bar">
+                    <span id="outputStats">0 lines</span>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Powered by Ollama CodeLlama | Built with B.L.A.S.T. Protocol</p>
+        </footer>
+    </div>
+    
+    <script>
+        const javaInput = document.getElementById('javaInput');
+        const playwrightOutput = document.getElementById('playwrightOutput');
+        const languageSelect = document.getElementById('language');
+        const loading = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const outputBadge = document.getElementById('outputBadge');
+        
+        // Update line count
+        javaInput.addEventListener('input', () => {
+            const lines = javaInput.value.split('\n').length;
+            document.getElementById('inputStats').textContent = `${lines} lines`;
+        });
+        
+        // Update badge when language changes
+        languageSelect.addEventListener('change', () => {
+            outputBadge.textContent = languageSelect.value === 'typescript' ? 'TS' : 'JS';
+        });
+        
+        async function convertCode() {
+            const code = javaInput.value.trim();
+            
+            if (!code) {
+                showError('Please enter some Java code to convert');
+                return;
+            }
+            
+            loading.classList.add('active');
+            errorDiv.classList.remove('active');
+            
+            try {
+                const response = await fetch('/api/convert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        language: languageSelect.value
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    playwrightOutput.querySelector('code').textContent = result.converted_code;
+                    const lines = result.converted_code.split('\n').length;
+                    document.getElementById('outputStats').textContent = `${lines} lines`;
+                    downloadBtn.disabled = false;
+                } else {
+                    showError(result.error || 'Conversion failed');
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+        
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+        }
+        
+        function downloadCode() {
+            const code = playwrightOutput.querySelector('code').textContent;
+            if (!code || code === '// Converted Playwright code will appear here...') {
+                return;
+            }
+            
+            const extension = languageSelect.value === 'typescript' ? '.ts' : '.js';
+            const blob = new Blob([code], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `converted-test${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
